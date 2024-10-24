@@ -1,0 +1,17 @@
+pyzmq==25.1.2
+ipykernel==6.29.5
+streamlit
+openai
+langchain
+langchain-openai
+langchain-community
+langchainhub
+langchain-chroma
+beautifulsoup4
+ipykernel
+python-dotenv
+langgraph 
+langsmith 
+langchain_anthropic
+tavily-python 
+langchain_community

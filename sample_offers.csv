@@ -1,0 +1,20 @@
+offer,price_per_unit,quantity,bundling_unit,bundling_amount,bundling_discount,payment_term,payment_term_markup,delivery_timeline,contract_period,contract_inflation_by_year,rebates_threshold_unit,rebates_discount,warranty,incoterms
+"Price per unit: $95
+Quantity: 10,000 units
+Bundling: If ordered with additional safety gear ($20,000 total), a 5% discount on the total contract.
+Payment Terms: NET30 with a 3% markup if NET60 is requested.
+Delivery Timelines: 10 days.
+Contract Period Length: 2 years with a 3% price increase in the second year.
+Rebates: 2% rebate if the purchase volume exceeds 12,000 units in the first year.
+Warranties: 1-year standard warranty.
+Incoterms: DDP (Delivered Duty Paid)",95,10000,,20000,5,NET60,3,10,2,"[0,3]",12000,2,1,DDP
+"Price per unit: $100
+Quantity: 10,000 units
+Bundling: No bundling option.
+Payment Terms: NET10, no option for extending to NET30.
+Delivery Timelines: 7 days (faster).
+Contract Period Length: 1 year, with the option to renew at the same price.
+Rebates: 1% rebate on orders above 11,000 units.
+Warranties: 1-year standard warranty with an option to extend to 3 years for an additional $5/unit.
+Incoterms: FOB (Free on Board)",100,10000,,,,NET10,0,7,1,[0],11000,1,1,FOB
+I want to offer product for 130 $ per unit,130,,,,,,,,,,,,,

@@ -164,14 +164,13 @@ class Contract():
 
 @dataclass
 class Session():
-    session_id: int = None
+    session_id:int = None
     user_id: int = None
     material_id:int = None
     start_time:dt.datetime = None
     end_time:dt.datetime = None
 
     def load_from_data(self,data):
-        self.session_id = data['session_id']
         self.user_id = data['user_id']
         self.material_id = data['material_id']
         self.start_time = data['start_time']
@@ -236,11 +235,11 @@ def add_session(session:Session):
     db_connection.execute(
         """
         INSERT INTO Sessions 
-        (session_id,user_id,material_id,start_time,end_time)
-        VALUES(?,?,?,?,?)
+        (user_id,material_id,start_time,end_time)
+        VALUES(?,?,?,?)
         """,
         (
-            session.session_id,session.user_id,session.material_id,
+            session.user_id,session.material_id,
             session.start_time,session.end_time
         )
     )
@@ -281,9 +280,15 @@ def get_last_contract(user_id,material_id):
     return df.rows(named = True)[0]
 
 # Function to start a new session for a user
-def start_session(user_id):
+def start_session(
+    user_id:int,
+    material_id:int
+) -> int:
     db_connection = duckdb.connect(DUCKDB_DB_NAME)
-    db_connection.execute("INSERT INTO Sessions (user_id) VALUES (?)", (user_id,))
+    db_connection.execute(
+        "INSERT INTO Sessions (user_id,material_id) VALUES (?,?)", 
+        (user_id,material_id)
+    )
     session_id = db_connection.execute(
         """SELECT session_id FROM Sessions 
         WHERE user_id = ? 
@@ -422,6 +427,15 @@ def pull_all_contracts():
     db_connection = duckdb.connect(DUCKDB_DB_NAME)
     df = db_connection.execute(
         """SELECT * FROM Contracts"""
+    ).pl()
+    db_connection.close()
+    return df
+
+def get_session_by_id(session_id:int):
+    db_connection = duckdb.connect(DUCKDB_DB_NAME)
+    df = db_connection.execute(
+        """SELECT * FROM Sessions where session_id = ?""",
+        (session_id,)
     ).pl()
     db_connection.close()
     return df

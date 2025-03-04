@@ -287,12 +287,12 @@ def generate_offer_using_LLM(
     supplier_offer:str,
     levers:List[str]
 ):
-    return {
-        'offers': [
-            'Unit Price: \\$ 100\nQuantity: 10,000 units\nBundling: No bundling option.\nPayment Terms: NET10, no option for extending to NET30.\nDelivery Timelines: 7 days.\nContract Period Length: 1 year, with the option to renew at the same price.\nRebates: 1% rebate on orders above 10,000 units.\nWarranties: 1-year standard warranty with an option to extend to 3 years for an additional \\$5/unit.\nIncoterms: DAP (Delivered At Place) – supplier manages shipping, with buyer handling customs and delivery.', 'Unit Price: \\$ 100\nQuantity: 10,000 units\nBundling: No bundling option.\nPayment Terms: NET10, no option for extending to NET30.\nDelivery Timelines: 7 days.\nContract Period Length: 1 year, with the option to renew at the same price.\nRebates: 2% rebate on orders above 11,000 units.\nWarranties: 1-year standard warranty with an option to extend to 3 years for an additional \\$5/unit.\nIncoterms: CIF (Cost, Insurance, and Freight) – supplier manages shipping and insurance.', 'Unit Price: \\$ 100\nQuantity: 10,000 units\nBundling: No bundling option.\nPayment Terms: NET10, no option for extending to NET30.\nDelivery Timelines: 7 days.\nContract Period Length: 1 year, with the option to renew at the same price.\nRebates: 2% rebate on orders above 11,000 units.\nWarranties: 1-year standard warranty with an option to extend to 3 years for an additional \\$5/unit.\nIncoterms: DPU (Delivered at Place, the supplier handles most of the shipping and delivery logistics).'
-        ], 
-        'status': 'live'
-    }
+    # return {
+    #     'offers': [
+    #         'Unit Price: \\$ 100\nQuantity: 10,000 units\nBundling: No bundling option.\nPayment Terms: NET10, no option for extending to NET30.\nDelivery Timelines: 7 days.\nContract Period Length: 1 year, with the option to renew at the same price.\nRebates: 1% rebate on orders above 10,000 units.\nWarranties: 1-year standard warranty with an option to extend to 3 years for an additional \\$5/unit.\nIncoterms: DAP (Delivered At Place) – supplier manages shipping, with buyer handling customs and delivery.', 'Unit Price: \\$ 100\nQuantity: 10,000 units\nBundling: No bundling option.\nPayment Terms: NET10, no option for extending to NET30.\nDelivery Timelines: 7 days.\nContract Period Length: 1 year, with the option to renew at the same price.\nRebates: 2% rebate on orders above 11,000 units.\nWarranties: 1-year standard warranty with an option to extend to 3 years for an additional \\$5/unit.\nIncoterms: CIF (Cost, Insurance, and Freight) – supplier manages shipping and insurance.', 'Unit Price: \\$ 100\nQuantity: 10,000 units\nBundling: No bundling option.\nPayment Terms: NET10, no option for extending to NET30.\nDelivery Timelines: 7 days.\nContract Period Length: 1 year, with the option to renew at the same price.\nRebates: 2% rebate on orders above 11,000 units.\nWarranties: 1-year standard warranty with an option to extend to 3 years for an additional \\$5/unit.\nIncoterms: DPU (Delivered at Place, the supplier handles most of the shipping and delivery logistics).'
+    #     ], 
+    #     'status': 'live'
+    # }
     MIN_HIKE = 6
     MAX_HIKE = 8
     TCO = utils.calculate_TCO_from_offer_using_LLM(

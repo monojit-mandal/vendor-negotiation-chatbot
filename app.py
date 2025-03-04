@@ -324,28 +324,38 @@ def show_session_history_table_admin():
             }
         </style>
     """, unsafe_allow_html=True)
-    data = [
-        {"ID": 1, "Material": "Material 1", 'Supplier Name':'abc123',"Timestamp": (dt.datetime.now()-dt.timedelta(days=5)).date()},
-        {"ID": 2, "Material": "Material 2", 'Supplier Name':'abc231',"Timestamp": (dt.datetime.now()-dt.timedelta(days=3)).date()},
-        {"ID": 3, "Material": "Material 3", 'Supplier Name':'abc321', "Timestamp": (dt.datetime.now()-dt.timedelta(days=1)).date()},
-    ]
-    # st.markdown("<h6 style='text-align: center;'>Sessions</h6>", unsafe_allow_html=True)
+    # data = [
+    #     {"ID": 1, "Material": "Material 1", 'Supplier Name':'abc123',"Timestamp": (dt.datetime.now()-dt.timedelta(days=5)).date()},
+    #     {"ID": 2, "Material": "Material 2", 'Supplier Name':'abc231',"Timestamp": (dt.datetime.now()-dt.timedelta(days=3)).date()},
+    #     {"ID": 3, "Material": "Material 3", 'Supplier Name':'abc321', "Timestamp": (dt.datetime.now()-dt.timedelta(days=1)).date()},
+    # ]
+    data =  udb.pull_all_sessions()
+    data = data.with_columns(
+        [
+            pl.col('start_time').cast(pl.Date),
+            pl.col('end_time').cast(pl.Date),
+            pl.lit(None).alias('Action')
+        ]
+    )
+    data = data.rename(
+        {
+            'session_id':'ID',
+            'username': 'Username',
+            'description':'Material Description',
+            'start_time':'Start Time',
+            'end_time':'End Time'
+        }
+    )
+    columns = data.columns
+    cols = st.columns(len(columns))
+    for i in range(len(cols)):
+        cols[i].write(f'**{columns[i]}**')
 
-    col1, col2, col3, col4,col5 = st.columns(5)
-    col1.write("**ID**")
-    col2.write("**Material**")
-    col3.write("**Supplier Name**")
-    col4.write("**Timestamp**")
-    col5.write("**Actions**")
-
-    # TODO: remove this block
-    for row in data:
-        col1, col2, col3, col4,col5 = st.columns(5)
-        col1.write(row["ID"])
-        col2.write(row["Material"])
-        col3.write(row["Supplier Name"])
-        col4.write(row["Timestamp"])
-        action_col1, action_col2 = col5.columns(2)
+    for row in data.rows(named = True):
+        cols = st.columns(len(columns))
+        for i in range(len(columns)-1):
+            cols[i].write(row[columns[i]])
+        action_col1, action_col2 = cols[-1].columns(2)
         
         if action_col1.button("💬", key=f"chat_{row['ID']}"):
             st.session_state.selected_session = row
@@ -375,27 +385,38 @@ def show_session_history_table_suppliers():
             }
         </style>
     """, unsafe_allow_html=True)
-    data = [
-        {"ID": 1, "Material": "Material 1", "Timestamp": (dt.datetime.now()-dt.timedelta(days=5)).date()},
-        {"ID": 2, "Material": "Material 2", "Timestamp": (dt.datetime.now()-dt.timedelta(days=3)).date()},
-        {"ID": 3, "Material": "Material 3", "Timestamp": (dt.datetime.now()-dt.timedelta(days=1)).date()},
-    ]
-    st.markdown("<h6 style='text-align: center;'>Previous Sessions</h6>", unsafe_allow_html=True)
+    # data = [
+    #     {"ID": 1, "Material": "Material 1", "Timestamp": (dt.datetime.now()-dt.timedelta(days=5)).date()},
+    #     {"ID": 2, "Material": "Material 2", "Timestamp": (dt.datetime.now()-dt.timedelta(days=3)).date()},
+    #     {"ID": 3, "Material": "Material 3", "Timestamp": (dt.datetime.now()-dt.timedelta(days=1)).date()},
+    # ]
+    data =  udb.pull_sessions_by_user(username=st.session_state.username)
+    data = data.with_columns(
+        [
+            pl.col('start_time').cast(pl.Date),
+            pl.col('end_time').cast(pl.Date),
+            pl.lit(None).alias('Action')
+        ]
+    )
+    data = data.rename(
+        {
+            'session_id':'ID',
+            'username': 'Username',
+            'description':'Material Description',
+            'start_time':'Start Time',
+            'end_time':'End Time'
+        }
+    )
+    columns = data.columns
+    cols = st.columns(len(columns))
+    for i in range(len(cols)):
+        cols[i].write(f'**{columns[i]}**')
 
-    col1, col2, col3, col4 = st.columns(4)
-    col1.write("**Session ID**")
-    col2.write("**Material**")
-    col3.write("**Timestamp**")
-    col4.write("**Actions**")
-
-    # TODO: remove this block
-    st.session_state.messages = []
-    for row in data:
-        col1, col2, col3, col4 = st.columns(4)
-        col1.write(row["ID"])
-        col2.write(row["Material"])
-        col3.write(row["Timestamp"])
-        action_col1, action_col2, action_col3 = col4.columns(3)
+    for row in data.rows(named = True):
+        cols = st.columns(len(columns))
+        for i in range(len(columns)-1):
+            cols[i].write(row[columns[i]])
+        action_col1, action_col2, action_col3 = cols[-1].columns(3)
         if action_col1.button("🔄", key=f"restart_{row['ID']}"):
             st.session_state.selected_session = row
             st.session_state.action = "restart"
@@ -411,9 +432,9 @@ def show_session_history_table_suppliers():
             st.session_state.action = "info"
             st.rerun()
 
-    if st.button("Start New Session"):
-        st.session_state.action = 'restart'
-        st.rerun()
+    # if st.button("Start New Session"):
+    #     st.session_state.action = 'restart'
+    #     st.rerun()
     
     if st.session_state.action in ['chat','restart']:
         st.session_state.messages.append(
@@ -508,6 +529,74 @@ def negotiation_confirmation():
         st.session_state.step = ConversationState.DEFAULT
         st.rerun()
 
+# def first_offer_page():
+#     if st.session_state.first_time_offer_generated == False:
+#         st.session_state.responses = um.generate_offer_using_LLM(
+#             base_offer = st.session_state.base_offer,
+#             min_levers = st.session_state.MIN_LEVERS,
+#             max_levers = st.session_state.MAX_LEVERS,
+#             step = 1,
+#             TCO_hike_threshold_pct = 30,
+#             model = st.session_state.model,
+#             supplier_offer = None,
+#             levers = st.session_state.levers
+#         )
+#         st.session_state.first_time_offer_generated = True
+#     st.html(f'Please select an offer from any of the offers below to negotiate')
+#     options = [
+#         utils.convert_to_markdown(st.session_state.responses['offers'][0]),
+#         utils.convert_to_markdown(st.session_state.responses['offers'][1]),
+#         utils.convert_to_markdown(st.session_state.responses['offers'][2]),
+#     ]
+
+#     cols = st.columns(3)
+#     for i in range(len(cols)):
+#         with cols[i]:
+#             option = options[i]
+#             if st.button(label = option,key = str(i)):
+#                 st.session_state.supplier_offer = option
+#                 st.session_state.offer_selected = True
+#                 st.rerun()
+            
+#     if st.session_state.offer_selected:
+#         if st.button("Accept"):
+#             st.session_state.messages.append(
+#                 {
+#                     'content':f'''Here are the offers for you: 
+#                     Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+#                     Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+#                     Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+#                     'sender':'bot'
+#                 }
+#             )
+#             st.session_state.messages.append(
+#                 {
+#                     "content": f"Thanks for chosing an offer. Please check the offer chosen by you and confirm {st.session_state.supplier_offer}", 
+#                     "sender": 'bot'
+#                 }
+#             )
+#             st.session_state.step = ConversationState.OFFER_ACCEPTED
+#             st.rerun()
+
+#         if st.button("Negotiate"):
+#             st.session_state.messages.append(
+#                 {
+#                     'content':f'''Here are the offers for you: 
+#                     Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+#                     Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+#                     Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+#                     'sender':'bot'
+#                 }
+#             )
+#             st.session_state.messages.append(
+#                 {
+#                     "content": f"I want to negotiate.", 
+#                     "sender": 'user'
+#                 }
+#             )
+#             st.session_state.step = ConversationState.SUPPLIER_LEVERS_INPUT
+#             st.rerun()
+
 def first_offer_page():
     if st.session_state.first_time_offer_generated == False:
         st.session_state.responses = um.generate_offer_using_LLM(
@@ -528,53 +617,58 @@ def first_offer_page():
         utils.convert_to_markdown(st.session_state.responses['offers'][2]),
     ]
 
-    cols = st.columns(3)
-    for i in range(len(cols)):
-        with cols[i]:
-            option = options[i]
-            if st.button(label = option,key = str(i)):
-                st.session_state.supplier_offer = option
-                st.session_state.offer_selected = True
-                st.rerun()
-            
-    if st.session_state.offer_selected:
-        if st.button("Accept"):
-            st.session_state.messages.append(
-                {
-                    'content':f'''Here are the offers for you: 
-                    Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
-                    Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
-                    Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
-                    'sender':'bot'
-                }
+    for i in range(3):
+        with st.expander(f'Offer {i+1}', expanded=True):
+            # st.session_state.supplier_offer = options[i]
+            st.markdown(
+                f"""
+                <div style="font-size: 12px; line-height: 1.2;">
+                    {options[i]}
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
-            st.session_state.messages.append(
-                {
-                    "content": f"Thanks for chosing an offer. Please check the offer chosen by you and confirm {st.session_state.supplier_offer}", 
-                    "sender": 'bot'
-                }
-            )
-            st.session_state.step = ConversationState.OFFER_ACCEPTED
-            st.rerun()
-
-        if st.button("Negotiate"):
-            st.session_state.messages.append(
-                {
-                    'content':f'''Here are the offers for you: 
-                    Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
-                    Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
-                    Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
-                    'sender':'bot'
-                }
-            )
-            st.session_state.messages.append(
-                {
-                    "content": f"I want to negotiate.", 
-                    "sender": 'user'
-                }
-            )
-            st.session_state.step = ConversationState.SUPPLIER_LEVERS_INPUT
-            st.rerun()
+            col1,col2 = st.columns(2)
+            with col1:
+                if st.button("Accept",key=f'accept_{i}'):
+                    st.session_state.supplier_offer = options[i]
+                    st.session_state.messages.append(
+                        {
+                            'content':f'''Here are the offers for you: 
+                            Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+                            Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+                            Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+                            'sender':'bot'
+                        }
+                    )
+                    st.session_state.messages.append(
+                        {
+                            "content": f"Thanks for chosing an offer. Please check the offer chosen by you and confirm {st.session_state.supplier_offer}", 
+                            "sender": 'bot'
+                        }
+                    )
+                    st.session_state.step = ConversationState.OFFER_ACCEPTED
+                    st.rerun()
+            with col2:
+                if st.button("Negotiate",key=f'negotiate_{i}'):
+                    st.session_state.supplier_offer = options[i]
+                    st.session_state.messages.append(
+                        {
+                            'content':f'''Here are the offers for you: 
+                            Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+                            Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+                            Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+                            'sender':'bot'
+                        }
+                    )
+                    st.session_state.messages.append(
+                        {
+                            "content": f"I want to negotiate.", 
+                            "sender": 'user'
+                        }
+                    )
+                    st.session_state.step = ConversationState.SUPPLIER_LEVERS_INPUT
+                    st.rerun()
 
 def supplier_levers_input_page():
     st.html(f'Please share your offer based on the levers input')
@@ -745,55 +839,109 @@ def second_offer_page():
             utils.convert_to_markdown(st.session_state.responses['offers'][1]),
             utils.convert_to_markdown(st.session_state.responses['offers'][2]),
         ]
-        cols = st.columns(3)
-        for i in range(len(cols)):
-            with cols[i]:
-                option = options[i]
-                if st.button(label = option,key = str(i)):
-                    st.session_state.supplier_offer = option
-                    st.session_state.offer_selected = True
-                    # st.rerun()
+        for i in range(3):
+            with st.expander(f'Offer {i+1}', expanded=True):
+                # st.session_state.supplier_offer = options[i]
+                st.markdown(
+                    f"""
+                    <div style="font-size: 12px; line-height: 1.2;">
+                        {options[i]}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                col1,col2 = st.columns(2)
+                with col1:
+                    if st.button("Accept",key = f'accept_{i}'):
+                        st.session_state.supplier_offer = options[i]
+                        st.session_state.messages.append(
+                            {
+                                'content':f'''Here are the offers for you: 
+                                Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+                                Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+                                Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+                                'sender':'bot'
+                            }
+                        )
+                        st.session_state.messages.append(
+                            {
+                                "content": f"I want to proceed with this offer: {st.session_state.supplier_offer}", 
+                                "sender": 'user'
+                            }
+                        )
+                        st.session_state.step = ConversationState.OFFER_ACCEPTED
+                        st.rerun()
+                with col2:
+                    if st.button("Negotiate",key = f'negotiate_{i}'):
+                        st.session_state.supplier_offer = options[i]
+                        st.session_state.messages.append(
+                            {
+                                'content':f'''Here are the offers for you: 
+                                Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+                                Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+                                Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+                                'sender':'bot'
+                            }
+                        )
+                        st.session_state.messages.append(
+                            {
+                                "content": f"I want to negotiate further", 
+                                "sender": 'user'
+                            }
+                        )
+                        st.session_state.step = ConversationState.SUPPLIER_LEVER_PRIORITY
+                        st.rerun()
+
+
+        # cols = st.columns(3)
+        # for i in range(len(cols)):
+        #     with cols[i]:
+        #         option = options[i]
+        #         if st.button(label = option,key = str(i)):
+        #             st.session_state.supplier_offer = option
+        #             st.session_state.offer_selected = True
+        #             # st.rerun()
                 
-        if st.session_state.offer_selected:
-            # col1,col2 = st.columns(2)
-            # with col1:
-            if st.button("Accept"):
-                st.session_state.messages.append(
-                    {
-                        'content':f'''Here are the offers for you: 
-                        Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
-                        Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
-                        Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
-                        'sender':'bot'
-                    }
-                )
-                st.session_state.messages.append(
-                    {
-                        "content": f"I want to proceed with this offer: {st.session_state.supplier_offer}", 
-                        "sender": 'user'
-                    }
-                )
-                st.session_state.step = ConversationState.OFFER_ACCEPTED
-                st.rerun()
-            # with col2:
-            if st.button("Negotiate"):
-                st.session_state.messages.append(
-                    {
-                        'content':f'''Here are the offers for you: 
-                        Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
-                        Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
-                        Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
-                        'sender':'bot'
-                    }
-                )
-                st.session_state.messages.append(
-                    {
-                        "content": f"I want to negotiate further", 
-                        "sender": 'user'
-                    }
-                )
-                st.session_state.step = ConversationState.SUPPLIER_LEVER_PRIORITY
-                st.rerun()
+        # if st.session_state.offer_selected:
+        #     # col1,col2 = st.columns(2)
+        #     # with col1:
+        #     if st.button("Accept"):
+        #         st.session_state.messages.append(
+        #             {
+        #                 'content':f'''Here are the offers for you: 
+        #                 Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+        #                 Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+        #                 Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+        #                 'sender':'bot'
+        #             }
+        #         )
+        #         st.session_state.messages.append(
+        #             {
+        #                 "content": f"I want to proceed with this offer: {st.session_state.supplier_offer}", 
+        #                 "sender": 'user'
+        #             }
+        #         )
+        #         st.session_state.step = ConversationState.OFFER_ACCEPTED
+        #         st.rerun()
+        #     # with col2:
+        #     if st.button("Negotiate"):
+        #         st.session_state.messages.append(
+        #             {
+        #                 'content':f'''Here are the offers for you: 
+        #                 Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+        #                 Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+        #                 Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+        #                 'sender':'bot'
+        #             }
+        #         )
+        #         st.session_state.messages.append(
+        #             {
+        #                 "content": f"I want to negotiate further", 
+        #                 "sender": 'user'
+        #             }
+        #         )
+        #         st.session_state.step = ConversationState.SUPPLIER_LEVER_PRIORITY
+        #         st.rerun()
 
 def supplier_priority_lever_page():
     col1,col2,col3 = st.columns(3)
@@ -852,56 +1000,110 @@ def third_offer_page():
         utils.convert_to_markdown(st.session_state.responses['offers'][1]),
         utils.convert_to_markdown(st.session_state.responses['offers'][2]),
     ]
-    cols = st.columns(3)
-    for i in range(len(cols)):
-        with cols[i]:
-            option = options[i]
-            if st.button(label = option,key = str(i)):
-                # st.session_state.supplier_offer = option
-                st.session_state.supplier_offer = option
-                st.session_state.offer_selected = True
-                # st.rerun()
+    for i in range(3):
+        with st.expander(f'Offer {i+1}', expanded=True):
+            # st.session_state.supplier_offer = options[i]
+            st.markdown(
+                f"""
+                <div style="font-size: 12px; line-height: 1.2;">
+                    {options[i]}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            col1,col2 = st.columns(2)
+            with col1:
+                if st.button("Accept",key = f'accept_{i}'):
+                    st.session_state.supplier_offer = options[i]
+                    st.session_state.messages.append(
+                        {
+                            'content':f'''Here are the offers for you: 
+                            Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+                            Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+                            Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+                            'sender':'bot'
+                        }
+                    )
+                    st.session_state.messages.append(
+                        {
+                            "content": f"Thanks for chosing an offer. Please check the offer chosen by you and confirm {st.session_state.supplier_offer}", 
+                            "sender": 'bot'
+                        }
+                    )
+                    st.session_state.step = ConversationState.OFFER_ACCEPTED
+                    st.rerun()
+            with col2:
+                if st.button("Negotiate",key = f'negotiate_{i}'):
+                    st.session_state.supplier_offer = options[i]
+                    st.session_state.messages.append(
+                        {
+                            'content':f'''Here are the offers for you: 
+                            Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+                            Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+                            Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+                            'sender':'bot'
+                        }
+                    )
+                    st.session_state.messages.append(
+                        {
+                            "content": f"I am not okay with the current offer. want to negotiate further", 
+                            "sender": 'user'
+                        }
+                    )
+                    st.session_state.step = ConversationState.SUPPLIER_FINAL_OFFER
+                    st.rerun()
+
+
+    # cols = st.columns(3)
+    # for i in range(len(cols)):
+    #     with cols[i]:
+    #         option = options[i]
+    #         if st.button(label = option,key = str(i)):
+    #             # st.session_state.supplier_offer = option
+    #             st.session_state.supplier_offer = option
+    #             st.session_state.offer_selected = True
+    #             # st.rerun()
             
-    if st.session_state.offer_selected:
-        # col1,col2 = st.columns(2)
-        # with col1:
-        if st.button("Accept"):
-            st.session_state.messages.append(
-                {
-                    'content':f'''Here are the offers for you: 
-                    Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
-                    Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
-                    Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
-                    'sender':'bot'
-                }
-            )
-            st.session_state.messages.append(
-                {
-                    "content": f"Thanks for chosing an offer. Please check the offer chosen by you and confirm {st.session_state.supplier_offer}", 
-                    "sender": 'bot'
-                }
-            )
-            st.session_state.step = ConversationState.OFFER_ACCEPTED
-            st.rerun()
-        # with col2:
-        if st.button("Negotiate"):
-            st.session_state.messages.append(
-                {
-                    'content':f'''Here are the offers for you: 
-                    Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
-                    Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
-                    Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
-                    'sender':'bot'
-                }
-            )
-            st.session_state.messages.append(
-                {
-                    "content": f"I am not okay with the current offer. want to negotiate further", 
-                    "sender": 'user'
-                }
-            )
-            st.session_state.step = ConversationState.SUPPLIER_FINAL_OFFER
-            st.rerun()
+    # if st.session_state.offer_selected:
+    #     # col1,col2 = st.columns(2)
+    #     # with col1:
+    #     if st.button("Accept"):
+    #         st.session_state.messages.append(
+    #             {
+    #                 'content':f'''Here are the offers for you: 
+    #                 Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+    #                 Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+    #                 Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+    #                 'sender':'bot'
+    #             }
+    #         )
+    #         st.session_state.messages.append(
+    #             {
+    #                 "content": f"Thanks for chosing an offer. Please check the offer chosen by you and confirm {st.session_state.supplier_offer}", 
+    #                 "sender": 'bot'
+    #             }
+    #         )
+    #         st.session_state.step = ConversationState.OFFER_ACCEPTED
+    #         st.rerun()
+    #     # with col2:
+    #     if st.button("Negotiate"):
+    #         st.session_state.messages.append(
+    #             {
+    #                 'content':f'''Here are the offers for you: 
+    #                 Offer 1: {utils.convert_to_markdown(st.session_state.responses['offers'][0])}
+    #                 Offer 2: {utils.convert_to_markdown(st.session_state.responses['offers'][1])}
+    #                 Offer 3: {utils.convert_to_markdown(st.session_state.responses['offers'][2])}''',
+    #                 'sender':'bot'
+    #             }
+    #         )
+    #         st.session_state.messages.append(
+    #             {
+    #                 "content": f"I am not okay with the current offer. want to negotiate further", 
+    #                 "sender": 'user'
+    #             }
+    #         )
+    #         st.session_state.step = ConversationState.SUPPLIER_FINAL_OFFER
+    #         st.rerun()
 
 def supplier_final_levers_input_page():
     st.html(f'Please share your offer based on the levers input')
@@ -1210,7 +1412,10 @@ def main():
     if page == "Contracts":
         show_contracts_table()
     if page == 'Negotiations' and st.session_state.action == None:
-        st.session_state.step = ConversationState.DEFAULT
+        if st.session_state.username == 'accenture':
+            show_session_history_table_admin()
+        else:
+            st.session_state.step = ConversationState.DEFAULT
     
     # with st.sidebar:
     #     # Header with user icon and logout option
@@ -1249,6 +1454,22 @@ def main():
     #         # )
 
     # st.title("Tailend Supplier Negotiation Chatbot")
+    print(st.session_state.selected_session)
+    if st.session_state.selected_session != None:
+        session = udb.get_session_by_id(
+            session_id = st.session_state.selected_session['ID']
+        ).rows(named = True)[0]
+        st.session_state.material_id = session['material_id']
+        st.session_state.session_id = udb.start_session(
+            user_id=session['user_id'],
+            material_id=session['material_id']
+        )
+        base_offer = udb.get_last_contract(
+            user_id=session['user_id'],
+            material_id=session['material_id']
+        )['contract_details']
+        print(base_offer)
+        # print(udb.get_session_by_id(session_id = st.session_state.selected_session['ID']))
     # TODO: Make it dynamic from database
     st.session_state.base_offer = """
     Price per unit: $100
@@ -1279,10 +1500,7 @@ def main():
     }
 
     if st.session_state.step.value == ConversationState.DEFAULT.value:
-        if st.session_state.username == 'accenture':
-            show_session_history_table_admin()
-        else:
-            show_session_history_table_suppliers()
+        show_session_history_table_suppliers()
         return
     
     for msg in st.session_state.messages:

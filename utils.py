@@ -861,15 +861,16 @@ def generate_eqv_offers_using_LLM(
                 lvrs = list(set(random.choices(levers,[lever_priority[l] for l in levers],k=2)))
         print(f'Randomly selected levers are: ',lvrs)
         response = generate_new_offer_using_LLM(
-            existing_offer=existing_offer,
-            TCO_min=TCO_min,
-            TCO_new=TCO_new,
-            levers=lvrs,
-            min_levers=min_levers,
+            existing_offer = existing_offer,
+            TCO_min = TCO_min,
+            TCO_new = TCO_new,
+            levers = lvrs,
+            min_levers = min_levers,
             max_levers = max_levers,
             model = model
         )
-        offers.append(response["Offer"].replace('$','\$'))
+        # offers.append(response["Offer"].replace('$','\$'))
+        offers.append(response["Offer"])
         levers_list.append(lvrs)
     return offers
 

@@ -415,6 +415,14 @@ def pull_all_materials():
     db_connection.close()
     return df
 
+def pull_material_by_id(material_id):
+    db_connection = duckdb.connect(DUCKDB_DB_NAME)
+    df = db_connection.execute(
+        """SELECT * FROM Materials where material_id = ?""",(material_id,)
+    ).pl()
+    db_connection.close()
+    return df
+
 def pull_all_suplliers():
     db_connection = duckdb.connect(DUCKDB_DB_NAME)
     df = db_connection.execute(

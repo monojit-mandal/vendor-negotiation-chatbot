@@ -841,6 +841,7 @@ def generate_eqv_offers_using_LLM(
             'Delivery Timeline','Rebates','Warranties',
             'Incoterms'
         ]
+    levers = list(set(levers))
     lever_priority = {
         'Unit Price':10,
         'Quantity':0,
@@ -852,13 +853,21 @@ def generate_eqv_offers_using_LLM(
         'Incoterms':5
     }
     offers = []
-    levers_list = []
-    for i in range(n_offers):
-        if len(levers_list) == 0:
-            lvrs = list(set(random.choices(levers,[lever_priority[l] for l in levers],k=2)))
-        else:
-            while lvrs in levers_list:
+    if len(levers) == 1:
+        levers_list = [[levers[0]],[levers[0]],[levers[0]]]
+    elif len(levers) == 2:
+        levers_list = [[levers[0]],[levers[1]],[levers[0],levers[1]]]
+    else:
+        levers_list = []
+        for i in range(n_offers):
+            if len(levers_list) == 0:
                 lvrs = list(set(random.choices(levers,[lever_priority[l] for l in levers],k=2)))
+            else:
+                while lvrs in levers_list:
+                    lvrs = list(set(random.choices(levers,[lever_priority[l] for l in levers],k=2)))
+            levers_list.append(lvrs)
+    for i in range(n_offers):
+        lvrs = levers_list[i]
         print(f'Randomly selected levers are: ',lvrs)
         response = generate_new_offer_using_LLM(
             existing_offer = existing_offer,
@@ -871,7 +880,6 @@ def generate_eqv_offers_using_LLM(
         )
         # offers.append(response["Offer"].replace('$','\$'))
         offers.append(response["Offer"])
-        levers_list.append(lvrs)
     return offers
 
 def calculate_TCO_from_offer_using_LLM(

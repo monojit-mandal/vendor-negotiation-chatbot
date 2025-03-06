@@ -598,6 +598,27 @@ def negotiation_confirmation():
 #             st.rerun()
 
 def first_offer_page():
+    session = udb.get_session_by_id(
+        session_id = st.session_state.selected_session['ID']
+    ).rows(named = True)[0]
+    st.session_state.material_id = session['material_id']
+    # st.session_state.session_id = udb.start_session(
+    #     user_id=session['user_id'],
+    #     material_id=session['material_id']
+    # )
+    st.session_state.base_offer = udb.get_last_contract(
+        user_id=session['user_id'],
+        material_id=session['material_id']
+    )['contract_details']
+    material = udb.pull_material_by_id(session['material_id']).rows(named = True)[0]
+    st.session_state.MIN_LEVERS = {
+        'Unit Price':material['min_price_per_unit'],
+        'Quantity': material['min_quantity']
+    }
+    st.session_state.MAX_LEVERS = {
+        'Unit Price': material['max_price_per_unit'],
+        'Quantity': material['max_quantity']
+    }
     if st.session_state.first_time_offer_generated == False:
         st.session_state.responses = um.generate_offer_using_LLM(
             base_offer = st.session_state.base_offer,
@@ -618,7 +639,7 @@ def first_offer_page():
     ]
 
     for i in range(3):
-        with st.expander(f'Offer {i+1}', expanded=True):
+        with st.expander(f'Offer {i+1}', expanded=False):
             # st.session_state.supplier_offer = options[i]
             st.markdown(
                 f"""
@@ -840,7 +861,7 @@ def second_offer_page():
             utils.convert_to_markdown(st.session_state.responses['offers'][2]),
         ]
         for i in range(3):
-            with st.expander(f'Offer {i+1}', expanded=True):
+            with st.expander(f'Offer {i+1}', expanded=False):
                 # st.session_state.supplier_offer = options[i]
                 st.markdown(
                     f"""
@@ -1001,7 +1022,7 @@ def third_offer_page():
         utils.convert_to_markdown(st.session_state.responses['offers'][2]),
     ]
     for i in range(3):
-        with st.expander(f'Offer {i+1}', expanded=True):
+        with st.expander(f'Offer {i+1}', expanded=False):
             # st.session_state.supplier_offer = options[i]
             st.markdown(
                 f"""
@@ -1454,50 +1475,59 @@ def main():
     #         # )
 
     # st.title("Tailend Supplier Negotiation Chatbot")
-    print(st.session_state.selected_session)
-    if st.session_state.selected_session != None:
-        session = udb.get_session_by_id(
-            session_id = st.session_state.selected_session['ID']
-        ).rows(named = True)[0]
-        st.session_state.material_id = session['material_id']
-        st.session_state.session_id = udb.start_session(
-            user_id=session['user_id'],
-            material_id=session['material_id']
-        )
-        base_offer = udb.get_last_contract(
-            user_id=session['user_id'],
-            material_id=session['material_id']
-        )['contract_details']
-        print(base_offer)
-        # print(udb.get_session_by_id(session_id = st.session_state.selected_session['ID']))
-    # TODO: Make it dynamic from database
-    st.session_state.base_offer = """
-    Price per unit: $100
-    Quantity: 10,000 units
-    Bundling: No bundling option.
-    Payment Terms: NET10, no option for extending to NET30.
-    Delivery Timelines: 7 days.
-    Contract Period Length: 1 year, with the option to renew at the same price.
-    Rebates: 1% rebate on orders above 11,000 units.
-    Warranties: 1-year standard warranty with an option to extend to 3 years for an additional $5/unit.
-    Incoterms: FOB (Free on Board) - buyer is responsible for customs and delivery.
-    """
-    # material = udb.get_material_info(
-    #     material_id=st.session_state.material_id
-    # )
+    # print(st.session_state.selected_session)
+    # if st.session_state.selected_session != None:
+    #     session = udb.get_session_by_id(
+    #         session_id = st.session_state.selected_session['ID']
+    #     ).rows(named = True)[0]
+    #     st.session_state.material_id = session['material_id']
+    #     # st.session_state.session_id = udb.start_session(
+    #     #     user_id=session['user_id'],
+    #     #     material_id=session['material_id']
+    #     # )
+    #     st.session_state.base_offer = udb.get_last_contract(
+    #         user_id=session['user_id'],
+    #         material_id=session['material_id']
+    #     )['contract_details']
+    #     material = udb.pull_material_by_id(session['material_id']).rows(named = True)[0]
+    #     st.session_state.MIN_LEVERS = {
+    #         'Unit Price':material['min_price_per_unit'],
+    #         'Quantity': material['min_quantity']
+    #     }
+    #     st.session_state.MAX_LEVERS = {
+    #         'Unit Price': material['max_price_per_unit'],
+    #         'Quantity': material['max_quantity']
+    #     }
 
-    # actual = utils.ContractActual(
-    #     quantity=material['quantity'],
-    #     price_per_unit=material['price_per_unit']
-    # )
-    st.session_state.MIN_LEVERS = {
-        'Unit Price':100,
-        'Quantity': 10000
-    }
-    st.session_state.MAX_LEVERS = {
-        'Unit Price':120,
-        'Quantity': 10000
-    }
+        # print(udb.get_session_by_id(session_id = st.session_state.selected_session['ID']))
+    # # TODO: Make it dynamic from database
+    # st.session_state.base_offer = """
+    # Price per unit: $100
+    # Quantity: 10,000 units
+    # Bundling: No bundling option.
+    # Payment Terms: NET10, no option for extending to NET30.
+    # Delivery Timelines: 7 days.
+    # Contract Period Length: 1 year, with the option to renew at the same price.
+    # Rebates: 1% rebate on orders above 11,000 units.
+    # Warranties: 1-year standard warranty with an option to extend to 3 years for an additional $5/unit.
+    # Incoterms: FOB (Free on Board) - buyer is responsible for customs and delivery.
+    # """
+    # # material = udb.get_material_info(
+    # #     material_id=st.session_state.material_id
+    # # )
+
+    # # actual = utils.ContractActual(
+    # #     quantity=material['quantity'],
+    # #     price_per_unit=material['price_per_unit']
+    # # )
+    # st.session_state.MIN_LEVERS = {
+    #     'Unit Price':100,
+    #     'Quantity': 10000
+    # }
+    # st.session_state.MAX_LEVERS = {
+    #     'Unit Price':120,
+    #     'Quantity': 10000
+    # }
 
     if st.session_state.step.value == ConversationState.DEFAULT.value:
         show_session_history_table_suppliers()

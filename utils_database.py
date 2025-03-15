@@ -33,6 +33,12 @@ CREATE TABLE IF NOT EXISTS Materials (
     max_quantity INTEGER,
     min_price_per_unit FLOAT,
     max_price_per_unit FLOAT,
+    min_incoterm VARCHAR,
+    max_incoterm VARCHAR,
+    min_payment_term VARCHAR,
+    max_payment_term VARCHAR,
+    min_delivery_time INTEGER,
+    max_delivery_time INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 """)
@@ -110,6 +116,12 @@ class Material():
     max_quantity:int = None
     min_price_per_unit:float = None
     max_price_per_unit:float = None
+    min_incoterm:str = None
+    max_incoterm:str = None
+    min_payment_term:str = None
+    max_payment_term:str = None
+    min_delivery_time:int = None
+    max_delivery_time:int = None
     
     def load_from_data(self,data):
         self.material_id = data['material_id']
@@ -120,6 +132,12 @@ class Material():
         self.max_quantity = data['max_quantity']
         self.min_price_per_unit = data['min_price_per_unit']
         self.max_price_per_unit = data['max_price_per_unit']
+        self.min_incoterm = data['min_incoterm']
+        self.max_incoterm = data['min_incoterm']
+        self.min_payment_term = data['min_payment_term']
+        self.max_payment_term = data['max_payment_term']
+        self.min_delivery_time = data['min_delivery_time']
+        self.max_delivery_time = data['max_delivery_time']
         return self
 
 
@@ -193,13 +211,17 @@ def add_material(material:Material):
         """
         INSERT INTO Materials 
         (material_id,description,quantity,price_per_unit,
-        min_quantity,max_quantity,min_price_per_unit,max_price_per_unit)
-        VALUES(?,?,?,?,?,?,?,?)
+        min_quantity,max_quantity,min_price_per_unit,max_price_per_unit,
+        min_incoterm,max_incoterm,min_payment_term,max_payment_term,
+        min_delivery_time,max_delivery_time)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """,
         (
             material.material_id,material.description,material.quantity,
             material.price_per_unit,material.min_quantity,material.max_quantity,
-            material.min_price_per_unit,material.max_price_per_unit
+            material.min_price_per_unit,material.max_price_per_unit,material.min_incoterm,
+            material.max_incoterm,material.min_payment_term,material.max_payment_term,
+            material.min_delivery_time,material.max_delivery_time
         )
     )
     db_connection.close()

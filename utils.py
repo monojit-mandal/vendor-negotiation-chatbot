@@ -12,6 +12,24 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage,HumanMessage
 from langchain.chat_models import AzureChatOpenAI
 import copy
+import os
+
+FRIENDLY_NAMES = {
+    'price_per_unit':'Unit Price ($)',
+    'quantity':'Quantity',
+    'bundling_unit':'Bundling Unit',
+    'bundling_amount':'Bundling Value ($)',
+    'bundling_discount':'Bundling Discount (%)',
+    'payment_term':'Payment Term',
+    'payment_term_markup':'Payment Term Markup (%)',
+    'delivery_timeline':'Delivery Time (Days)',
+    'contract_period':'Contract Period (Years)',
+    'contract_inflation':'Inflation (%)',
+    'rebates_threshold_unit':'Rebate Quantity',
+    'rebates_discount':'Rebate Doscount (%)',
+    'warranty':'Warranty (Years)',
+    'incoterms':'Incoterms'
+}
 
 class PaymentTerm(Enum):
     NET10 = 10
@@ -128,7 +146,6 @@ class ContractOffer:
     payment_term: Payment = None
     delivery_timeline:float = None
     contract_period:int = None
-    # contract_inflation_by_year:List[float] = None
     contract_inflation:float = 0
     rebates_threshold_unit:float = None
     rebates_discount:float = None
@@ -1048,9 +1065,68 @@ def calculate_contract_value_using_LLM(
     )
     return response
 
-def convert_to_markdown(text: str) -> str:
-    """Converts a given string into Markdown format with proper new lines."""
-    return text.replace("\n", "  \n")  # Markdown requires two spaces before newline for line breaks
+# def convert_to_markdown(text: str) -> str:
+#     """Converts a given string into Markdown format with proper new lines."""
+#     return text.replace("\n", "  \n")  # Markdown requires two spaces before newline for line breaks
+
+def format_offers_to_html_table(
+    offers:List[str]
+):
+    model = AzureChatOpenAI(
+        deployment_name= "gpt-4o",
+        api_key=os.getenv('AZURE_OPENAI_API_KEY'),
+        api_version="2023-09-15-preview",
+        azure_endpoint="https://acsstscdamoai02.openai.azure.com/",
+        temperature=0
+    )
+    examples_df = pl.read_csv('data/sample_offers.csv')
+    offers = [
+        extract_levers_from_text(
+            offer_text=offer,
+            model = model,
+            example_data=examples_df
+        ) 
+        for offer in offers
+    ]
+
+    df = pl.DataFrame(offers).rename(FRIENDLY_NAMES)
+    df = df.transpose(include_header=True)
+    df.columns = ['Levers'] + [f'Offer {i+1}' for i in range(len(offers))]
+    return df.to_pandas().to_html(index = False)
+
+def format_offer_to_html(offer_text):
+    model = AzureChatOpenAI(
+        deployment_name= "gpt-4o",
+        api_key=os.getenv('AZURE_OPENAI_API_KEY'),
+        api_version="2023-09-15-preview",
+        azure_endpoint="https://acsstscdamoai02.openai.azure.com/",
+        temperature=0,  # Controls randomness (0 = deterministic, 1 = more creative)
+    )
+    levers = extract_levers_from_text(
+        offer_text = offer_text,
+        model = model,
+        example_data = pl.read_csv('data/sample_offers.csv')
+    )
+    df = pl.DataFrame([levers]).rename(FRIENDLY_NAMES).transpose(include_header=True)
+    df.columns = ['Levers','Value']
+    return df.drop_nulls().to_pandas().to_html(index = False)
+
+def format_offer_to_markdown(offer_text):
+    model = AzureChatOpenAI(
+        deployment_name= "gpt-4o",
+        api_key=os.getenv('AZURE_OPENAI_API_KEY'),
+        api_version="2023-09-15-preview",
+        azure_endpoint="https://acsstscdamoai02.openai.azure.com/",
+        temperature=0,  # Controls randomness (0 = deterministic, 1 = more creative)
+    )
+    levers = extract_levers_from_text(
+        offer_text = offer_text,
+        model = model,
+        example_data = pl.read_csv('data/sample_offers.csv')
+    )
+    df = pl.DataFrame([levers]).rename(FRIENDLY_NAMES).transpose(include_header=True)
+    df.columns = ['Levers','Value']
+    return df.drop_nulls().to_pandas().to_markdown(index = False)
 
 def understand_priority_levers(
     existing_offer: str,

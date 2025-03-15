@@ -167,13 +167,13 @@ def levers_to_offer_text(
 ):
     offer_text = ''''''
     offer_text = offer_text + f'Unit Price: \$ {price_per_unit};'
-    offer_text = offer_text + f'Quantity: {quantity};'
-    offer_text = offer_text + f'Payment Term: Default NET30, if {payment_term} then mark up discount of {payment_term_markup};'
-    offer_text = offer_text + f'Delivery Timeline: {delivery_timeline};'
-    offer_text = offer_text + f'Contract Period: {contract_period} years with inflation {contract_inflation} % in each year;'
-    offer_text = offer_text + f'Rebates: If purchase above {rebates_threshold_unit} unit then discout is {rebates_discount} %;'
-    offer_text = offer_text + f'Warranty: {warranty} years;'
-    offer_text = offer_text + f'Incoterms: {incoterms}'
+    offer_text = offer_text + f' Quantity: {quantity};'
+    offer_text = offer_text + f' Payment Term: Default NET30, if {payment_term} then mark up discount of {payment_term_markup};'
+    offer_text = offer_text + f' Delivery Timeline: {delivery_timeline};'
+    offer_text = offer_text + f' Contract Period: {contract_period} years with inflation {contract_inflation} % in each year;'
+    offer_text = offer_text + f' Rebates: If purchase above {rebates_threshold_unit} unit then discout is {rebates_discount} %;'
+    offer_text = offer_text + f' Warranty: {warranty} years;'
+    offer_text = offer_text + f' Incoterms: {incoterms}'
     if bundling_unit == None and bundling_amount == None:
         pass
     if bundling_unit == None and bundling_amount != None:
@@ -355,17 +355,26 @@ def generate_offer_using_LLM(
             min_hike = min(TCO_hike_threshold_pct,2*MAX_HIKE)
             TCO_new = TCO*(1+hike/100)
             TCO_min = TCO*(1+min_hike/100)
-            offers = utils.generate_eqv_offers_using_LLM(
-                existing_offer = base_offer,
-                TCO_new = TCO_new,
-                TCO_min = TCO_min,
-                min_levers = min_levers,
-                max_levers = max_levers,
-                n_offers = 3,
-                model = model,
-                levers = levers
-            )
-            return {'offers':offers,'status':'live'}
+            tco_supplier = utils.calculate_contract_value_using_LLM(
+                offer = supplier_offer,
+                base_offer=base_offer,
+                model = model
+            )['Annual Cost of Contract ($)']
+            print('Supplier asked for TCO: ',tco_supplier)
+            if TCO_new >= tco_supplier:
+                return {'offers':[supplier_offer],'status':'accepted'}
+            else:
+                offers = utils.generate_eqv_offers_using_LLM(
+                    existing_offer = base_offer,
+                    TCO_new = TCO_new,
+                    TCO_min = TCO_min,
+                    min_levers = min_levers,
+                    max_levers = max_levers,
+                    n_offers = 3,
+                    model = model,
+                    levers = levers
+                )
+                return {'offers':offers,'status':'live'}
         case 4:
             tco_supplier = utils.calculate_contract_value_using_LLM(
                 offer = supplier_offer,
